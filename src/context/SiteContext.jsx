@@ -10,11 +10,25 @@ export default function SiteProvider({ children }) {
 		latitude: 40,
 		zoom: 11,
 	});
+	// Location for search pin
+	const [pinLocation, setPinlocation] = useState({
+		longitude: "",
+		latitude: "",
+	});
+	// location for user
+	const [userPinLocation, setUserPinlocation] = useState({
+		longitude: "",
+		latitude: "",
+	});
 
 	// Get user's current location
 	useEffect(() => {
 		navigator.geolocation.getCurrentPosition((position) => {
 			setViewState({
+				latitude: position.coords.latitude,
+				longitude: position.coords.longitude,
+			});
+			setUserPinlocation({
 				latitude: position.coords.latitude,
 				longitude: position.coords.longitude,
 			});
@@ -49,9 +63,15 @@ export default function SiteProvider({ children }) {
 					console.log(res);
 					if (res.data.features.length > 0) {
 						setViewState({
+							zoom: 11,
 							longitude: res.data.features[0].center[0],
 							latitude: res.data.features[0].center[1],
 						});
+						setPinlocation({
+							longitude: res.data.features[0].center[0],
+							latitude: res.data.features[0].center[1],
+						});
+						setPlaces([]);
 						setIsFound(true);
 					} else {
 						setIsFound(false);
@@ -60,6 +80,44 @@ export default function SiteProvider({ children }) {
 					setLoading(false);
 				});
 		}
+	};
+
+	// state to set autocomplete options
+	const [places, setPlaces] = useState([]);
+
+	// function to fill options for searched item
+	const handleAutoComplete = (value) => {
+		setSearchItem(value);
+		if (value.length > 2) {
+			axios
+				.get(
+					`https://api.mapbox.com/geocoding/v5/mapbox.places/${value}.json?access_token=${process.env.REACT_APP_MAP_ACCESS_TOKEN}`
+				)
+				.then((res) => {
+					console.log(res);
+					if (res.data.features.length > 0) {
+						setPlaces(res.data.features);
+						setIsFound(true);
+					} else {
+						setIsFound(false);
+					}
+				});
+		}
+	};
+
+	// Go to specific location when option clicked
+	const goToLocation = (center, place) => {
+		setViewState({
+			zoom: 11,
+			longitude: center[0],
+			latitude: center[1],
+		});
+		setPinlocation({
+			longitude: center[0],
+			latitude: center[1],
+		});
+		setSearchItem(place);
+		setPlaces([]);
 	};
 
 	// ---------------------------------------
@@ -97,6 +155,11 @@ export default function SiteProvider({ children }) {
 				isDark,
 				setIsDark,
 				mapLink,
+				places,
+				handleAutoComplete,
+				goToLocation,
+				pinLocation,
+				userPinLocation,
 			}}
 		>
 			{children}
