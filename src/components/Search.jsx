@@ -8,7 +8,7 @@ export default function Search({
 	loading,
 }) {
 	return (
-		<form className="w-full">
+		<form className="w-full drop-shadow-lg">
 			<label
 				for="default-search"
 				class="mb-2 text-sm font-medium text-gray-900 sr-only dark:text-white"
